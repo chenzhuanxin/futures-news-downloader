@@ -9,11 +9,28 @@
 - 导出为 **Word 文档**，规范排版，**原文配图直接插入对应资讯正文中**；
 - 网页界面（UI）美观，支持搜索、多选、预览、进度条、一键下载。
 
+> 📥 **直接下载 exe（免安装）**：
+> [FuturesNewsDownloader.exe](https://github.com/chenzhuanxin/futures-news-downloader/releases/download/v1.0.0/FuturesNewsDownloader.exe)
+> —— Windows 单文件版，约 22 MB，双击即用
+>
+> 📖 **在线文档**：
+> [使用说明](https://chenzhuanxin.github.io/futures-news-downloader/usage.html) ·
+> [数据源说明](https://chenzhuanxin.github.io/futures-news-downloader/data-source.html) ·
+> [项目首页](https://chenzhuanxin.github.io/futures-news-downloader/)
+
 ---
 
 ## 一、快速开始
 
-### 方式 A：双击启动（推荐）
+### 方式 0：直接用 exe（免安装，最省事）
+
+从 [Releases](https://github.com/chenzhuanxin/futures-news-downloader/releases/latest)
+下载 `FuturesNewsDownloader.exe`，**双击运行**即可，无需安装 Python。
+启动后会自动打开浏览器，生成的文件保存在 **exe 同级目录的 `output/`** 下。
+
+> 首次运行若被 Windows SmartScreen 拦截，点「更多信息」→「仍要运行」即可（未签名程序的正常提示）。
+
+### 方式 A：双击启动（源码方式，推荐开发者）
 
 双击项目根目录下的 **`启动.bat`**，会自动：
 1. 启动本地服务（默认 `http://127.0.0.1:8899`）；
@@ -76,16 +93,22 @@ python app.py
 futures-news-downloader/
 ├── app.py                 # Flask 后端：品种接口 / 预览 / 导出 / 进度 / 下载
 ├── requirements.txt
-├── 启动.bat               # Windows 一键启动
+├── 启动.bat               # Windows 一键启动（源码方式）
+├── build_exe.bat          # 一键打包为 exe（PyInstaller）
+├── app.ico                # 应用图标
 ├── core/
 │   ├── varieties.py       # 88 个品种数据（来自公众号导航页）
-│   ├── sources.py         # 资讯检索 + 正文/图片抓取
+│   ├── sources.py         # 资讯检索 + 正文/图片抓取（东财 / 新浪）
 │   └── docx_builder.py    # Word 排版生成
 ├── static/
 │   ├── index.html         # 前端页面
 │   ├── style.css          # 界面样式
 │   └── app.js             # 前端交互逻辑
-└── output/                # 生成结果（Word / zip / images）
+├── docs/                  # GitHub Pages 在线文档
+│   ├── index.html         # 项目首页
+│   ├── usage.html         # 使用说明
+│   └── data-source.html   # 数据源说明
+└── output/                # 生成结果（Word / zip）
 ```
 
 ---
