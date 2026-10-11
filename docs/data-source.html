@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据源说明 · 期货品种资讯下载器</title>
+<meta name="description" content="期货品种资讯下载器数据源详解：品种数据来源、东方财富与新浪财经接口、字段映射、筛选与去重、图片抓取策略。">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-in">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 17l5-5 4 4 8-8"/><path d="M15 8h5v5"/>
+      </svg>
+    </div>
+    <div class="ttl">期货品种资讯下载器<small>FUTURES NEWS DOWNLOADER</small></div>
+    <div class="nav-links">
+      <a href="index.html">首页</a>
+      <a href="usage.html">使用说明</a>
+      <a href="data-source.html" class="on">数据源说明</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="layout">
+
+    <aside class="toc">
+      <h4>目录</h4>
+      <a href="#overview">1. 数据流总览</a>
+      <a href="#varieties">2. 品种基础数据</a>
+      <a href="#em">3. 数据源一：东方财富</a>
+      <a href="#em-search" class="sub">· 搜索接口</a>
+      <a href="#em-article" class="sub">· 文章页解析</a>
+      <a href="#sina">4. 数据源二：新浪财经</a>
+      <a href="#sina-search" class="sub">· 搜索接口</a>
+      <a href="#sina-article" class="sub">· 文章页解析</a>
+      <a href="#fields">5. 字段映射</a>
+      <a href="#window">6. 时间窗口与筛选</a>
+      <a href="#dedup">7. 跨源去重</a>
+      <a href="#images">8. 图片抓取与过滤</a>
+      <a href="#policy">9. 请求策略</a>
+      <a href="#media">10. 内容原始媒体</a>
+      <a href="#legal">11. 合规声明</a>
+    </aside>
+
+    <main class="content">
+
+      <!-- ============ 1 ============ -->
+      <section class="card" id="overview">
+        <h2><span class="num">1</span>数据流总览</h2>
+        <p class="lead">
+          整个工具涉及 <b>两类数据</b>：一类是「品种基础数据」（静态、内置），
+          另一类是「品种资讯数据」（动态、实时抓取）。它们的来源完全不同。
+        </p>
+
+        <table class="tbl">
+          <tr><th>数据类型</th><th>来源</th><th>获取方式</th><th>是否实时</th></tr>
+          <tr>
+            <td><b>品种基础数据</b></td>
+            <td>公众号图文内嵌的导航页</td>
+            <td>一次解析后<b>内置</b>到 <code>core/varieties.py</code></td>
+            <td><span class="pill gray">静态内置</span></td>
+          </tr>
+          <tr>
+            <td><b>品种资讯数据</b></td>
+            <td>东方财富 / 新浪财经</td>
+            <td>运行时按关键词<b>实时检索</b>并抓取正文</td>
+            <td><span class="pill green">实时</span></td>
+          </tr>
+        </table>
+
+        <h3>完整数据流</h3>
+        <div class="flow">
+          <div class="node"><b>关键词</b><span>品种名 / 代码</span></div>
+          <div class="arw">→</div>
+          <div class="node"><b>搜索接口</b><span>东财 / 新浪</span></div>
+          <div class="arw">→</div>
+          <div class="node"><b>时间过滤</b><span>近 3 天</span></div>
+          <div class="arw">→</div>
+          <div class="node"><b>正文抓取</b><span>段落 + 配图</span></div>
+          <div class="arw">→</div>
+          <div class="node"><b>排版输出</b><span>Word</span></div>
+        </div>
+
+        <div class="note info">
+          全部请求都在<b>本机</b>发出，直接访问目标站点公开接口。
+          没有经过任何第三方中转服务器，也没有把数据上传到别处。
+        </div>
+      </section>
+
+      <!-- ============ 2 ============ -->
+      <section class="card" id="varieties">
+        <h2><span class="num">2</span>品种基础数据</h2>
+
+        <h3>来源</h3>
+        <p>数据源自公众号图文
+          <a href="https://mp.weixin.qq.com/s/Qh9bfpa41s_CN9v2-XdIeQ" target="_blank" rel="noopener">
+            《公歧收藏：商品品种资讯导航》</a>。
+          该图文正文中以<b>代码块形式内嵌了一整个 HTML 导航页</b>，
+          工具从这段 HTML 里解析出全部品种清单，并固化为 Python 数据模块
+          <code>core/varieties.py</code>。</p>
+
+        <div class="note tip">
+          也就是说，<b>品种清单不是抓来的</b>，而是从你提供的导航页里解析出来、
+          一次定型的。想增删品种，直接改这个文件即可。
+        </div>
+
+        <h3>规模</h3>
+        <div class="grid g3">
+          <div class="stat"><b>88</b><span>品种总数</span></div>
+          <div class="stat"><b>6</b><span>交易所</span></div>
+          <div class="stat"><b>14</b><span>品类分组</span></div>
+        </div>
+
+        <table class="tbl">
+          <tr><th>交易所代码</th><th>简称</th><th>全称</th><th>品种数</th></tr>
+          <tr><td><code>shfe</code></td><td>上期所</td><td>上海期货交易所</td><td>20</td></tr>
+          <tr><td><code>dce</code></td><td>大商所</td><td>大连商品交易所</td><td>23</td></tr>
+          <tr><td><code>czce</code></td><td>郑商所</td><td>郑州商品交易所</td><td>27</td></tr>
+          <tr><td><code>cffex</code></td><td>中金所</td><td>中国金融期货交易所</td><td>8</td></tr>
+          <tr><td><code>ine</code></td><td>上期能源</td><td>上海国际能源交易中心</td><td>5</td></tr>
+          <tr><td><code>gfex</code></td><td>广期所</td><td>广州期货交易所</td><td>5</td></tr>
+        </table>
+
+        <h3>品类分组</h3>
+        <p>14 个分组用于界面上「仅金属 / 仅农产」等快捷筛选：</p>
+        <p>
+          <span class="pill gray">有色金属</span> <span class="pill gray">贵金属</span>
+          <span class="pill gray">黑色金属</span> <span class="pill gray">能源化工</span>
+          <span class="pill gray">农产品</span> <span class="pill gray">油脂油料</span>
+          <span class="pill gray">软商品</span> <span class="pill gray">建材</span>
+          <span class="pill gray">林木建材</span> <span class="pill gray">铁合金</span>
+          <span class="pill gray">新能源金属</span> <span class="pill gray">航运指数</span>
+          <span class="pill gray">股指期货</span> <span class="pill gray">国债期货</span>
+        </p>
+
+        <h3>字段结构</h3>
+        <table class="tbl">
+          <tr><th>字段</th><th>类型</th><th>含义</th><th>示例</th></tr>
+          <tr><td><code>ex</code></td><td>string</td><td>所属交易所代码</td><td><code>"shfe"</code></td></tr>
+          <tr><td><code>name</code></td><td>string</td><td>品种中文名</td><td><code>"沪铜"</code></td></tr>
+          <tr><td><code>code</code></td><td>string</td><td>品种代码</td><td><code>"CU"</code></td></tr>
+          <tr><td><code>py</code></td><td>string</td><td>拼音缩写（用于搜索）</td><td><code>"cu"</code></td></tr>
+          <tr><td><code>group</code></td><td>string</td><td>品类分组</td><td><code>"有色金属"</code></td></tr>
+          <tr><td><code>night</code></td><td>int</td><td>是否有夜盘（1/0）</td><td><code>1</code></td></tr>
+          <tr><td><code>kw</code></td><td>string</td><td>资讯检索关键词</td><td><code>"沪铜"</code></td></tr>
+          <tr><td><code>isNew</code></td><td>int</td><td>是否新品种（1/0）</td><td><code>0</code></td></tr>
+          <tr><td><code>bond</code></td><td>string/null</td><td>国债品种标注</td><td><code>null</code></td></tr>
+          <tr><td><code>cffexIdx</code></td><td>int</td><td>中金所品种序号</td><td><code>0</code></td></tr>
+        </table>
+
+        <h3>关键词覆盖规则</h3>
+        <p>检索时优先使用 <code>kw</code> 字段。对国债期货这类「简称易歧义」的品种，
+          程序内置了更精准的覆盖词：</p>
+        <table class="tbl">
+          <tr><th>品种</th><th>代码</th><th>默认关键词</th><th>覆盖为</th></tr>
+          <tr><td>2 年期国债</td><td><code>TS</code></td><td>二债</td><td><code>2年期国债</code></td></tr>
+          <tr><td>5 年期国债</td><td><code>TF</code></td><td>五债</td><td><code>5年期国债</code></td></tr>
+          <tr><td>10 年期国债</td><td><code>T</code></td><td>十债</td><td><code>10年期国债</code></td></tr>
+          <tr><td>30 年期国债</td><td><code>TL</code></td><td>三十债</td><td><code>30年期国债</code></td></tr>
+        </table>
+      </section>
+
+      <!-- ============ 3 ============ -->
+      <section class="card" id="em">
+        <h2><span class="num">3</span>数据源一：东方财富</h2>
+        <p>域名：<code>eastmoney.com</code>。用到一个搜索接口 + 若干文章页域名。</p>
+
+        <table class="tbl">
+          <tr><th>用途</th><th>域名 / 地址</th></tr>
+          <tr><td>资讯检索</td><td><code>search-api-web.eastmoney.com</code></td></tr>
+          <tr><td>文章正文</td><td><code>finance / futures / stock / bond .eastmoney.com</code></td></tr>
+          <tr><td>配图 CDN</td><td><code>np-newspic.dfcfw.com</code></td></tr>
+        </table>
+
+        <h3 id="em-search">3.1 搜索接口</h3>
+        <p><b>请求方式：</b>GET，返回 JSONP。</p>
+        <pre><code>GET https://search-api-web.eastmoney.com/search/jsonp
+      ?cb=cb
+      &amp;param={URL 编码后的 JSON}</code></pre>
+
+        <p><b>核心参数（param 的 JSON 结构）：</b></p>
+        <pre><code>{
+  <span class="s">"uid"</span>: <span class="s">""</span>,
+  <span class="s">"keyword"</span>: <span class="s">"沪铜"</span>,                 <span class="c">// 品种关键词</span>
+  <span class="s">"type"</span>: [<span class="s">"cmsArticleWebOld"</span>],      <span class="c">// 文章类型</span>
+  <span class="s">"client"</span>: <span class="s">"web"</span>,
+  <span class="s">"clientType"</span>: <span class="s">"web"</span>,
+  <span class="s">"clientVersion"</span>: <span class="s">"curr"</span>,
+  <span class="s">"param"</span>: {
+    <span class="s">"cmsArticleWebOld"</span>: {
+      <span class="s">"searchScope"</span>: <span class="s">"default"</span>,
+      <span class="s">"sort"</span>: <span class="s">"time"</span>,              <span class="c">// 按时间倒序</span>
+      <span class="s">"pageIndex"</span>: <span class="n">1</span>,
+      <span class="s">"pageSize"</span>: <span class="n">40</span>,
+      <span class="s">"preTag"</span>: <span class="s">"\u0001"</span>,            <span class="c">// 高亮标记（工具会清洗掉）</span>
+      <span class="s">"postTag"</span>: <span class="s">"\u0002"</span>
+    }
+  }
+}</code></pre>
+
+        <div class="note warn">
+          <b>踩坑记录：</b>接口默认会在命中关键词处插入 <code>&lt;em&gt;</code> 高亮标签。
+          工具改用不可见控制符 <code>\u0001 / \u0002</code> 作为标记，并在解析时
+          清洗掉，避免控制字符混进 Word 正文。
+        </div>
+
+        <p><b>返回结构（截取关键字段）：</b></p>
+        <pre><code>{
+  <span class="s">"result"</span>: {
+    <span class="s">"cmsArticleWebOld"</span>: [
+      {
+        <span class="s">"title"</span>: <span class="s">"沪铜主力合约震荡上行…"</span>,
+        <span class="s">"date"</span>: <span class="s">"2026-10-11 09:20:00"</span>,     <span class="c">// 发布时间</span>
+        <span class="s">"mediaName"</span>: <span class="s">"期货日报"</span>,          <span class="c">// 原始媒体</span>
+        <span class="s">"url"</span>: <span class="s">"https://finance.eastmoney.com/a/…"</span>,
+        <span class="s">"code"</span>: <span class="s">"20261011389…"</span>,            <span class="c">// 文章唯一 ID</span>
+        <span class="s">"content"</span>: <span class="s">"摘要内容…"</span>
+      }
+    ]
+  }
+}</code></pre>
+
+        <h3 id="em-article">3.2 文章页解析</h3>
+        <p>抓到链接后打开文章页，解析正文与配图：</p>
+        <table class="tbl">
+          <tr><th>数据</th><th>选择器 / 规则</th></tr>
+          <tr><td>标题</td><td><code>&lt;title&gt;</code>，去掉 <code>_</code> 后缀</td></tr>
+          <tr><td>发布时间</td><td><code>div.time</code></td></tr>
+          <tr><td>来源</td><td><code>div.sourcebox</code> 中的「文章来源：」</td></tr>
+          <tr><td>正文容器</td><td><code>div#ContentBody</code></td></tr>
+          <tr><td>正文元素</td><td>按文档顺序取 <code>p / img / h3 / h4 / blockquote</code></td></tr>
+        </table>
+
+        <div class="note danger">
+          <b>URL 必须升级为 HTTPS：</b>搜索结果里部分链接是 <code>http://</code>，
+          直接访问会 <b>403</b>。程序会自动把 <code>http://</code> 换成 <code>https://</code>，
+          并带上 <code>Referer</code> 才能正常取到正文。
+        </div>
+      </section>
+
+      <!-- ============ 4 ============ -->
+      <section class="card" id="sina">
+        <h2><span class="num">4</span>数据源二：新浪财经</h2>
+        <p>域名：<code>sina.com.cn</code>。作为东方财富的补充来源。</p>
+
+        <table class="tbl">
+          <tr><th>用途</th><th>域名 / 地址</th></tr>
+          <tr><td>资讯检索</td><td><code>interface.sina.cn/homepage/search.d.json</code></td></tr>
+          <tr><td>文章正文</td><td><code>finance.sina.com.cn</code> / <code>k.sina.com.cn</code></td></tr>
+          <tr><td>配图 CDN</td><td><code>sinaimg.cn</code></td></tr>
+        </table>
+
+        <h3 id="sina-search">4.1 搜索接口</h3>
+        <pre><code>GET https://interface.sina.cn/homepage/search.d.json
+      ?q={URL 编码的关键词}
+      &amp;num=20
+      &amp;page=1</code></pre>
+
+        <p><b>必须携带的请求头（否则返回 403）：</b></p>
+        <pre><code>Referer: https://finance.sina.com.cn/
+X-Requested-With: XMLHttpRequest</code></pre>
+
+        <p><b>返回结构：</b></p>
+        <pre><code>{
+  <span class="s">"result"</span>: {
+    <span class="s">"count"</span>: <span class="n">100</span>,
+    <span class="s">"list"</span>: [
+      {
+        <span class="s">"title"</span>: <span class="s">"铜价大涨背后…"</span>,
+        <span class="s">"datetime"</span>: <span class="s">"2026-10-11 08:05:00"</span>,   <span class="c">// 发布时间</span>
+        <span class="s">"media"</span>: <span class="s">"财联社"</span>,                 <span class="c">// 原始媒体</span>
+        <span class="s">"url"</span>: <span class="s">"https://finance.sina.com.cn/…"</span>,
+        <span class="s">"id"</span>: <span class="s">"5953740931"</span>,
+        <span class="s">"intro"</span>: <span class="s">"摘要…"</span>
+      }
+    ]
+  }
+}</code></pre>
+
+        <div class="note tip">
+          <b>翻页策略：</b>结果按时间倒序返回。程序逐页翻，
+          当某一页里<b>最早的时间都已早于窗口下限</b>时，就停止翻页，
+          避免无效请求。
+        </div>
+
+        <h3 id="sina-article">4.2 文章页解析</h3>
+        <table class="tbl">
+          <tr><th>数据</th><th>选择器 / 规则</th></tr>
+          <tr><td>标题</td><td><code>meta[property=og:title]</code> → <code>h1</code> → <code>&lt;title&gt;</code></td></tr>
+          <tr><td>发布时间</td><td><code>span.date</code> / <code>div.date</code> → <code>article:published_time</code></td></tr>
+          <tr><td>正文容器</td><td><code>#artibody</code> → <code>div#article</code> → <code>.article-content</code> …（依次尝试）</td></tr>
+          <tr><td>正文元素</td><td>按文档顺序取 <code>p / img / h3 / h4 / blockquote</code></td></tr>
+        </table>
+        <p>视频页（<code>video.sina.com.cn</code>）没有正文，程序会直接跳过。</p>
+      </section>
+
+      <!-- ============ 5 ============ -->
+      <section class="card" id="fields">
+        <h2><span class="num">5</span>字段映射</h2>
+        <p>两个来源的返回字段不同，程序统一归一化成同一套内部结构：</p>
+        <table class="tbl">
+          <tr>
+            <th>统一字段</th><th>含义</th>
+            <th>东方财富来源</th><th>新浪财经来源</th>
+          </tr>
+          <tr><td><code>title</code></td><td>标题</td><td><code>title</code></td><td><code>title</code></td></tr>
+          <tr><td><code>date</code></td><td>发布时间</td><td><code>date</code></td><td><code>datetime</code></td></tr>
+          <tr><td><code>source</code></td><td>原始媒体</td><td><code>mediaName</code></td><td><code>media</code></td></tr>
+          <tr><td><code>url</code></td><td>原文链接</td><td><code>url</code></td><td><code>url</code></td></tr>
+          <tr><td><code>code</code></td><td>唯一 ID</td><td><code>code</code></td><td><code>id</code></td></tr>
+          <tr><td><code>summary</code></td><td>摘要</td><td><code>content</code></td><td><code>intro</code></td></tr>
+          <tr><td><code>src</code></td><td>来源标识</td><td><code>"em"</code></td><td><code>"sina"</code></td></tr>
+        </table>
+
+        <h3>正文结构（blocks）</h3>
+        <p>文章正文被解析成一个<b>有顺序的块列表</b>，这是实现「图片按原位插入」的关键：</p>
+        <pre><code>[
+  { <span class="s">"type"</span>: <span class="s">"p"</span>,   <span class="s">"text"</span>: <span class="s">"第一段正文…"</span> },
+  { <span class="s">"type"</span>: <span class="s">"p"</span>,   <span class="s">"text"</span>: <span class="s">"第二段正文…"</span> },
+  { <span class="s">"type"</span>: <span class="s">"img"</span>, <span class="s">"url"</span>: <span class="s">"https://…jpg"</span> },   <span class="c">// 图在原文的位置</span>
+  { <span class="s">"type"</span>: <span class="s">"p"</span>,   <span class="s">"text"</span>: <span class="s">"第三段正文…"</span> }
+]</code></pre>
+      </section>
+
+      <!-- ============ 6 ============ -->
+      <section class="card" id="window">
+        <h2><span class="num">6</span>时间窗口与筛选</h2>
+        <p>时间窗口由 <code>get_date_window(days)</code> 生成，默认 <code>days=3</code>：</p>
+        <pre><code><span class="k">今天</span>  = 运行日
+<span class="k">昨天</span>  = 运行日 - 1
+<span class="k">前天</span>  = 运行日 - 2
+
+合法日期集合 = { 前天, 昨天, 今天 }   <span class="c">// 形如 "2026-10-09"</span></code></pre>
+
+        <table class="tbl">
+          <tr><th>步骤</th><th>规则</th></tr>
+          <tr><td>入库判定</td><td>资讯 <code>date[:10]</code> 落在合法日期集合内才保留。</td></tr>
+          <tr><td>提前停止（东财）</td><td>结果按时间倒序，一旦出现早于窗口下限的日期即停止该品种后续请求。</td></tr>
+          <tr><td>提前停止（新浪）</td><td>本页最早时间已早于窗口下限时，停止翻页。</td></tr>
+          <tr><td>排序</td><td>最终按发布时间<b>倒序</b>（最新在前）。</td></tr>
+          <tr><td>条数上限</td><td>每个品种最多保留「每品种条数」设置值（默认 15）。</td></tr>
+        </table>
+
+        <div class="note info">
+          <b>注意：</b>筛选依据是<b>文章的发布时间</b>，不是抓取时间。
+          所以你在 11 号运行，抓到的是 9、10、11 号发布的稿件。
+        </div>
+      </section>
+
+      <!-- ============ 7 ============ -->
+      <section class="card" id="dedup">
+        <h2><span class="num">7</span>跨源去重</h2>
+        <p>选择「两家合并」时，同一篇稿子可能在东财和新浪都存在。去重规则：</p>
+        <pre><code><span class="c"># 标题归一化：去掉所有空白与符号，取前 26 个字符</span>
+key = re.sub(<span class="s">r"[\s\W_]+"</span>, <span class="s">""</span>, title)[:26]
+
+<span class="c"># 相同 key 只保留先出现的那条（东财优先）</span></code></pre>
+        <ul>
+          <li><b>同源内去重</b>：用文章唯一 ID（东财 <code>code</code> / 新浪 <code>id</code>）或 URL 判重。</li>
+          <li><b>跨源去重</b>：用归一化标题判重，避免「同稿多站转载」重复入档。</li>
+          <li><b>源优先级</b>：合并模式下东方财富先入队，因此同标题时保留东财版本。</li>
+        </ul>
+      </section>
+
+      <!-- ============ 8 ============ -->
+      <section class="card" id="images">
+        <h2><span class="num">8</span>图片抓取与过滤</h2>
+
+        <h3>抓取流程</h3>
+        <ol class="steps">
+          <li><b>从正文块里收集图片 URL</b>，按原文顺序保留。</li>
+          <li><b>下载</b>到临时目录（带 <code>Referer</code>，避免防盗链）。</li>
+          <li><b>校验</b>：文件体积与真实像素尺寸双重过滤。</li>
+          <li><b>嵌入</b>到 Word 对应位置，随后<b>删除临时目录</b>。</li>
+        </ol>
+
+        <h3>过滤规则</h3>
+        <table class="tbl">
+          <tr><th>规则</th><th>阈值</th><th>过滤对象</th></tr>
+          <tr><td>文件体积</td><td>&lt; 2048 字节</td><td>空白图 / 占位图</td></tr>
+          <tr><td>真实宽度</td><td>&lt; 200 px</td><td>站点图标、小按钮</td></tr>
+          <tr><td>真实高度</td><td>&lt; 140 px</td><td>窄横幅、分割线</td></tr>
+          <tr><td>URL 黑名单</td><td>含 logo / icon / avatar / qrcode / share_ 等</td><td>页眉页脚装饰图</td></tr>
+          <tr><td>单篇上限</td><td>最多 12 张</td><td>图片过载的图集稿</td></tr>
+        </table>
+
+        <h3>Word 中的呈现</h3>
+        <ul>
+          <li>按<b>原文位置</b>插入对应的段落之间，不集中堆到文末。</li>
+          <li>居中显示，按正文宽度（16 cm）<b>等比缩放</b>，保证完整不裁切。</li>
+          <li>图片下方统一加注「（原文配图）」，便于与正文区分。</li>
+        </ul>
+
+        <div class="note tip">
+          <b>为什么结果里没有 images 文件夹？</b>
+          图片只作中转：下载 → 嵌入 → 删除。你在 <code>output\</code> 里只会看到
+          Word 或 ZIP，不会有一堆散图。
+        </div>
+      </section>
+
+      <!-- ============ 9 ============ -->
+      <section class="card" id="policy">
+        <h2><span class="num">9</span>请求策略</h2>
+
+        <h3>请求头</h3>
+        <pre><code>User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+            (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36
+Accept-Language: zh-CN,zh;q=0.9
+
+<span class="c"># 东方财富：</span>
+Referer: https://so.eastmoney.com/           <span class="c">// 搜索</span>
+Referer: https://futures.eastmoney.com/      <span class="c">// 文章页</span>
+
+<span class="c"># 新浪财经：</span>
+Referer: https://finance.sina.com.cn/
+X-Requested-With: XMLHttpRequest</code></pre>
+
+        <h3>并发与限速</h3>
+        <table class="tbl">
+          <tr><th>参数</th><th>取值</th><th>说明</th></tr>
+          <tr><td>搜索并发</td><td>8 线程</td><td>同时检索多个品种</td></tr>
+          <tr><td>抓取并发</td><td>10 线程</td><td>同时抓取多篇正文与图片</td></tr>
+          <tr><td>请求间隔</td><td>0.08 s</td><td>同一品种翻页之间的间隔</td></tr>
+          <tr><td>单品种分页上限</td><td>东财 2 页 / 新浪 4 页</td><td>够用即止，减少请求</td></tr>
+          <tr><td>单篇正文上限</td><td>60 段（超出截断并标注）</td><td>防止长篇综述撑爆文档</td></tr>
+        </table>
+
+        <div class="note warn">
+          以上限速已足以正常使用。<b>请勿</b>为追求速度修改并发数与间隔，
+          高频请求可能触发目标站点风控，也会给对方服务器带来负担。
+        </div>
+      </section>
+
+      <!-- ============ 10 ============ -->
+      <section class="card" id="media">
+        <h2><span class="num">10</span>内容原始媒体</h2>
+        <p>
+          东方财富与新浪财经本质上是<b>聚合平台</b>，它们转载各家媒体的稿件。
+          程序会记录每篇文章的「原始媒体」并写入 Word（来源字段）。
+          实测出现频次较高的有：
+        </p>
+        <p>
+          <span class="pill gray">期货日报</span>
+          <span class="pill gray">东方财富研究中心</span>
+          <span class="pill gray">每日经济新闻</span>
+          <span class="pill gray">财联社</span>
+          <span class="pill gray">第一财经</span>
+          <span class="pill gray">国际金融报</span>
+          <span class="pill gray">界面新闻</span>
+          <span class="pill gray">上海证券报 · 中国证券网</span>
+          <span class="pill gray">21 世纪经济报道</span>
+          <span class="pill gray">南方财经网</span>
+          <span class="pill gray">中国证券报</span>
+          <span class="pill gray">深圳商报 · 读创</span>
+          <span class="pill gray">国金证券</span>
+          <span class="pill gray">光大期货</span>
+        </p>
+
+        <h3>导航页里挂载但未抓取的站点</h3>
+        <p>原导航页还提供了若干「入口」链接，但它们的定位不是资讯正文，
+          因此<b>本工具未纳入抓取</b>：</p>
+        <table class="tbl">
+          <tr><th>站点</th><th>定位</th></tr>
+          <tr><td>东方财富股吧 <code>guba.eastmoney.com</code></td><td>论坛讨论帖，非资讯</td></tr>
+          <tr><td>东方财富数据中心 <code>data.eastmoney.com</code></td><td>持仓龙虎榜、价格矩阵等结构化数据</td></tr>
+          <tr><td>新浪财经「专家坐堂」</td><td>问答栏目</td></tr>
+          <tr><td>9 期期货 <code>9qihuo.com</code></td><td>行情列表</td></tr>
+          <tr><td>6 大交易所官网</td><td>官方公告，接口各异，需单独适配</td></tr>
+        </table>
+      </section>
+
+      <!-- ============ 11 ============ -->
+      <section class="card" id="legal">
+        <h2><span class="num">11</span>合规声明</h2>
+        <div class="note danger">
+          <b>版权：</b>本工具抓取的资讯内容版权均归原媒体所有，
+          导出文档仅限个人学习研究使用，<b>不得用于商业用途</b>或大规模再分发。
+        </div>
+        <div class="note info">
+          <b>用途：</b>工具仅做「公开资讯的本地汇总整理」，不破解任何加密、
+          不绕过任何付费墙、不存储用户隐私数据。
+        </div>
+        <div class="note warn">
+          <b>准确性：</b>第三方采集可能存在延迟、遗漏或转载偏差。
+          涉及交易决策，请以交易所官方公告与权威媒体发布为准。
+        </div>
+        <div class="note warn">
+          <b>接口稳定性：</b>本文档描述的接口均为第三方公开接口，
+          对方可能随时调整参数或结构。若某天抓不到数据，
+          通常需要按最新接口重新适配。
+        </div>
+      </section>
+
+      <footer class="foot">
+        <div>期货品种资讯下载器 · 文档中心</div>
+        <div class="sig">
+          <span>设计：<b>公歧子</b></span>
+          <i>|</i>
+          <span>微信：<span class="mail">gongqizi0</span></span>
+        </div>
+      </footer>
+
+    </main>
+  </div>
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>

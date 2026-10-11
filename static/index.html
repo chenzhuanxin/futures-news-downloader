@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>期货品种资讯下载器</title>
+<link rel="icon" type="image/png" href="/static/favicon.png">
+<link rel="apple-touch-icon" href="/static/favicon.png">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="bg-deco"></div>
+
+<div class="wrap">
+
+  <!-- ============ 顶部 ============ -->
+  <header class="top">
+    <div class="brand">
+      <div class="mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 17l5-5 4 4 8-8"/><path d="M15 8h5v5"/>
+        </svg>
+      </div>
+      <div class="brand-txt">
+        <h1>期货品种资讯下载器</h1>
+        <p>一键抓取全部 / 单个品种近三日资讯（东方财富 + 新浪财经），导出规范排版的 Word 文档（配图随文插入）</p>
+      </div>
+    </div>
+    <div class="chips">
+      <div class="chip"><b id="statTotal">—</b><span>品种总数</span></div>
+      <div class="chip"><b id="statSel">0</b><span>已选品种</span></div>
+      <div class="chip"><b id="statDays">3</b><span>天资讯</span></div>
+    </div>
+  </header>
+
+  <!-- ============ 日期窗口 ============ -->
+  <div class="daterow" id="dateRow"></div>
+
+  <!-- ============ 工具栏 ============ -->
+  <section class="panel toolbar">
+    <div class="tb-top">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+        </svg>
+        <input id="q" type="text" placeholder="搜索品种名称 / 代码，如：沪铜、CU、螺纹钢…"
+               autocomplete="off">
+        <button id="clr" title="清空">×</button>
+      </div>
+      <div class="seg" id="filterSeg">
+        <button data-f="all" class="on">全部</button>
+        <button data-f="night">有夜盘</button>
+        <button data-f="new">新品种</button>
+      </div>
+    </div>
+    <div class="tb-bottom">
+      <div class="quick">
+        <button class="ebtn" id="btnAll">全选</button>
+        <button class="ebtn" id="btnNone">清空</button>
+        <button class="ebtn" id="btnNight">仅选夜盘</button>
+        <button class="ebtn" id="btnMetal">仅选金属</button>
+        <button class="ebtn" id="btnAgri">仅选农产</button>
+      </div>
+      <div class="selinfo">已选 <b id="selCount">0</b> 个品种</div>
+    </div>
+  </section>
+
+  <!-- ============ 品种区 ============ -->
+  <section class="varieties" id="varietyArea">
+    <div class="loading">正在加载品种数据…</div>
+  </section>
+
+  <!-- ============ 底部操作栏 ============ -->
+  <section class="panel actionbar">
+    <div class="ab-row">
+      <div class="field">
+        <label>资讯来源</label>
+        <div class="seg small" id="srcSeg">
+          <button data-s="em" class="on">东方财富</button>
+          <button data-s="sina">新浪财经</button>
+          <button data-s="both">两家合并</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>导出方式</label>
+        <div class="seg small" id="modeSeg">
+          <button data-m="merge" class="on">合并为一个 Word</button>
+          <button data-m="split">分品种打包 ZIP</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>每品种最多条数</label>
+        <select id="maxItems">
+          <option value="5">5 条</option>
+          <option value="10">10 条</option>
+          <option value="15" selected>15 条</option>
+          <option value="25">25 条</option>
+          <option value="40">40 条</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>原文配图</label>
+        <label class="switch">
+          <input type="checkbox" id="saveImg" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="ab-btns">
+        <span class="hint">未选择品种时默认导出全部 88 个品种</span>
+        <button class="btn ghost" id="btnPreview">预览资讯</button>
+        <button class="btn primary" id="btnExport">生成并下载 Word</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 进度 ============ -->
+  <section class="panel progress-panel" id="progPanel" style="display:none">
+    <div class="prog-head">
+      <span class="prog-title" id="progTitle">正在处理…</span>
+      <span class="prog-pct" id="progPct">0%</span>
+    </div>
+    <div class="bar"><span id="progBar"></span></div>
+    <div class="prog-msg" id="progMsg"></div>
+  </section>
+
+  <!-- ============ 结果 ============ -->
+  <section class="panel result-panel" id="resPanel" style="display:none"></section>
+
+  <!-- ============ 预览结果 ============ -->
+  <section class="panel preview-panel" id="pvPanel" style="display:none"></section>
+
+  <footer class="foot">
+    <span>数据来源：东方财富 · 新浪财经｜资讯与本工具无关，仅供学习研究使用</span>
+    <span class="credit">设计：公歧子&nbsp;&nbsp;微信：gongqizi0</span>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

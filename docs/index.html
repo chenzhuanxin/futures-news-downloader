@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>期货品种资讯下载器 · 文档中心</title>
+<meta name="description" content="一键抓取 88 个期货品种近三日资讯，导出规范排版的 Word 文档。">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-in">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 17l5-5 4 4 8-8"/><path d="M15 8h5v5"/>
+      </svg>
+    </div>
+    <div class="ttl">期货品种资讯下载器<small>FUTURES NEWS DOWNLOADER</small></div>
+    <div class="nav-links">
+      <a href="index.html" class="on">首页</a>
+      <a href="usage.html">使用说明</a>
+      <a href="data-source.html">数据源说明</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <h1>期货品种资讯下载器</h1>
+    <p>
+      把 6 大交易所的 <b>88 个期货品种</b> 装进一个本地小工具：按品种批量抓取
+      <b>今天 / 昨天 / 前天</b> 的资讯，自动排版成规范 Word 文档（原文配图按原位插入）。
+      数据来自东方财富与新浪财经，全程本地运行，无需上传任何数据。
+    </p>
+    <div class="badges">
+      <span class="badge">Python + Flask</span>
+      <span class="badge">Win 单文件 exe</span>
+      <span class="badge">88 品种 · 6 交易所</span>
+      <span class="badge">Word 规范排版</span>
+      <span class="badge">图文原位混排</span>
+    </div>
+    <div class="cta">
+      <a href="usage.html">开始使用 →</a>
+      <a href="data-source.html" class="ghost">查看数据源说明</a>
+    </div>
+  </section>
+
+  <div class="grid g4">
+    <div class="stat"><b>88</b><span>期货品种</span></div>
+    <div class="stat"><b>6</b><span>大交易所</span></div>
+    <div class="stat"><b>2</b><span>资讯数据源</span></div>
+    <div class="stat"><b>3</b><span>天时间窗口</span></div>
+  </div>
+
+  <h2 style="margin:34px 0 4px;font-size:20px">文档目录</h2>
+  <p style="color:var(--text-3);margin:0 0 6px;font-size:14.3px">
+    选择你要看的文档，或从上方导航栏切换。
+  </p>
+
+  <div class="doc-cards">
+    <a class="doc-card a" href="usage.html">
+      <div class="ic">📘</div>
+      <h3>使用说明文档</h3>
+      <p>
+        从下载安装到导出 Word 的完整流程：exe 直用 / 源码运行两种方式、界面导览、
+        逐步操作、输出文件说明、Word 排版规范、常见问题排查，一页看全。
+      </p>
+      <span class="go">打开使用说明 →</span>
+    </a>
+    <a class="doc-card b" href="data-source.html">
+      <div class="ic">🗄️</div>
+      <h3>数据源说明文档</h3>
+      <p>
+        品种数据从哪来、资讯接口长什么样、字段如何映射、时间窗口与去重如何判定、
+        图片如何抓取与过滤、请求头与限速策略、内容原始媒体清单与合规声明。
+      </p>
+      <span class="go">打开数据源说明 →</span>
+    </a>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">✦</span>这是什么</h2>
+    <p class="lead">
+      一个 <b>Python + HTML</b> 的本地工具：启动后在浏览器里打开一个网页界面，
+      勾选你关心的期货品种，一键抓取它们最近三天（今天/昨天/前天）的资讯，
+      导出成排版规范的 Word 文档。
+    </p>
+    <div class="grid g2">
+      <div class="feat">
+        <div class="ic">📦</div>
+        <h4>批量 / 单个都行</h4>
+        <p>支持一键全选 88 个品种，也可只挑一两个；按名称、代码、拼音搜索，还能按夜盘/金属/农产快捷筛选。</p>
+      </div>
+      <div class="feat">
+        <div class="ic">📅</div>
+        <h4>只抓近三天</h4>
+        <p>严格按发布时间过滤「今天 / 昨天 / 前天」，界面顶部会实时显示当前的时间窗口。</p>
+      </div>
+      <div class="feat">
+        <div class="ic">🔀</div>
+        <h4>双数据源可切换</h4>
+        <p>东方财富 / 新浪财经 / 两家合并。合并时同一篇稿子会自动去重，覆盖更全。</p>
+      </div>
+      <div class="feat">
+        <div class="ic">📝</div>
+        <h4>规范 Word 排版</h4>
+        <p>标题黑体三号加粗居中；正文仿宋三号两端对齐、首行缩进 2 字符；原文配图按原位插入。</p>
+      </div>
+      <div class="feat">
+        <div class="ic">🖼️</div>
+        <h4>图片随文呈现</h4>
+        <p>配图不是堆在文末，而是落在它原本所在的段落位置，居中等比缩放、完整显示。</p>
+      </div>
+      <div class="feat">
+        <div class="ic">🗂️</div>
+        <h4>两种打包方式</h4>
+        <p>合并成一个 Word（每品种独立分页），或每品种一个 Word 打包成 ZIP。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="num">!</span>使用前须知</h2>
+    <div class="note tip">
+      <b>零门槛运行：</b>直接下载 Release 里的 <code>FuturesNewsDownloader.exe</code>
+      双击即可，<b>不需要安装 Python</b>。首次启动会自动打开浏览器界面。
+    </div>
+    <div class="note warn">
+      <b>数据仅供学习研究：</b>本工具抓取的是第三方公开资讯，版权归原媒体所有，
+      请勿用于商业用途，也不要高频请求给目标站点造成压力。
+    </div>
+    <div class="note info">
+      <b>首次运行可能提示安全警告：</b>exe 未做代码签名，Windows SmartScreen 可能提示
+      「Windows 已保护你的电脑」，点「更多信息 → 仍要运行」即可。
+    </div>
+  </div>
+
+  <footer class="foot">
+    <div>期货品种资讯下载器 · 文档中心</div>
+    <div class="sig">
+      <span>设计：<b>公歧子</b></span>
+      <i>|</i>
+      <span>微信：<span class="mail">gongqizi0</span></span>
+    </div>
+  </footer>
+
+</div>
+<script src="assets/app.js"></script>
+</body>
+</html>
