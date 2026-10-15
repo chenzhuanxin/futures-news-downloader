@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo.png" width="120" alt="futures-news-downloader"></p>
+
 # 期货品种资讯下载器
 
 把公众号图文 **[公歧收藏：商品品种资讯导航](https://mp.weixin.qq.com/s/Qh9bfpa41s_CN9v2-XdIeQ)**
